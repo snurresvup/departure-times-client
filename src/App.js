@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/css/bootstrap-theme.css';
-import {Col, Form, FormGroup, PageHeader, Row, Panel} from 'react-bootstrap';
+import {Col, Form, FormGroup, PageHeader, Row} from 'react-bootstrap';
 import './App.css';
-import MapContainer from "./MapContainer";
+import MapContainer from './MapContainer';
+import DepartureTimes from './DepartureTimes';
 import axios from 'axios'
 import {Typeahead} from "react-bootstrap-typeahead";
 
@@ -14,6 +15,7 @@ class App extends Component {
 
     this.state = {
       modes: [],
+      currentStop: {},
       selectedMode: "",
       stations: [],
       userLocation: {},
@@ -23,8 +25,8 @@ class App extends Component {
 
     this.handleModeChanged = this.handleModeChanged.bind(this);
     this.getArrivalPredictions = this.getArrivalPredictions.bind(this);
-    this.onStationSelected = this.onStationSelected.bind(this);
     this.handleStopChanged = this.handleStopChanged.bind(this);
+    this.updateCurrentStop = this.updateCurrentStop.bind(this);
   }
 
   componentDidMount(){
@@ -120,32 +122,15 @@ class App extends Component {
     );
   }
 
-  onStationSelected(station){
-
+  updateCurrentStop(station){
     this.setState({
-      departureTimesHeading: <h2>Departure times for: {station.name}</h2>,
-      departureTimes: <strong>Loading...</strong>
+      currentStop: station
     });
-    console.log(station);
-
-    axios.get('http://localhost:8080/arrival-predictions', {params: { /*id : station.id,*/ station : station.name }})
-        .then((response) => {
-          this.setState({
-            departureTimesHeading: <h2>Departure times for: {station.name}</h2>,
-            departureTimes: this.buildArrivalTimesList(response.data)
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-          this.setState({
-            departureTimes: <h1>Could not find departure times for: {station.name}</h1>
-          })
-        });
   }
 
   handleStopChanged(stop){
     if(!stop[0]) return;
-    this.onStationSelected(stop[0]);
+    this.updateCurrentStop(stop[0]);
   }
 
   getAvailableStops(){
@@ -177,15 +162,16 @@ class App extends Component {
 
           <Row>
             <Col sm={12}>
-              <Panel header={this.state.departureTimesHeading} bsStyle="info">
-                {this.state.departureTimes}
-              </Panel>
+              <DepartureTimes currentStop={this.state.currentStop}/>
             </Col>
           </Row>
 
           <Row>
             <Col sm={12}>
-              <MapContainer onStationSelected={this.onStationSelected} userLocation={this.state.userLocation} showUserLocation={true} stations={this.state.stations}/>
+              <MapContainer onStationSelected={this.updateCurrentStop}
+                            userLocation={this.state.userLocation}
+                            showUserLocation={true}
+                            stations={this.state.stations}/>
             </Col>
           </Row>
         </div>
