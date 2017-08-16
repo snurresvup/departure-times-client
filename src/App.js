@@ -44,9 +44,15 @@ class App extends Component {
     });
   }
 
+  componentDidUpdate(prevProps, prevState){
+    if(this.state.userLocation !== prevState.userLocation){
+      this.updateStations()
+    }
+  }
+
 
   updateStations(){
-    axios.get('http://localhost:8080/stations', {params: {lat: this.state.userLocation.coords.latitude ,lng: this.state.userLocation.coords.longitude, radius: 200}})
+    axios.get('http://localhost:8080/stations', {params: {lat: this.state.userLocation.coords.latitude ,lng: this.state.userLocation.coords.longitude, radius: 2000}})
         .then((response) => {
           console.log(response);
           this.setState({
