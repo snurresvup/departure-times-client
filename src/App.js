@@ -5,7 +5,6 @@ import {Col, Form, FormGroup, PageHeader, Row} from 'react-bootstrap';
 import './App.css';
 import MapContainer from './MapContainer';
 import DepartureTimes from './DepartureTimes';
-import axios from 'axios'
 import {Typeahead} from "react-bootstrap-typeahead";
 
 
@@ -23,11 +22,6 @@ class App extends Component {
       departureTimesHeading: <h1>Departure Times</h1>,
       departureTimes: ""
     };
-
-    this.handleModeChanged = this.handleModeChanged.bind(this);
-    this.getArrivalPredictions = this.getArrivalPredictions.bind(this);
-    this.handleStopChanged = this.handleStopChanged.bind(this);
-    this.handleStopChangedByMap = this.handleStopChangedByMap.bind(this);
   }
 
   componentDidMount(){
@@ -75,7 +69,7 @@ class App extends Component {
   handleStopChanged(stop){
     if(!stop[0]) return;
 
-    if(!this.state.markedStations.includes(stop[0])) {
+    if(!this.stopIsMarked(stop[0])) {
       //Add the station to the map
       this.setState({
         markedStations: this.state.markedStations.concat(stop[0])
@@ -91,16 +85,59 @@ class App extends Component {
     });
   }
 
+  stopIsMarked(stop){
+    for(let st of this.state.markedStations){
+      if(st.id === stop.id) return true;
+    }
+    return false;
+  }
+
   getAvailableStops(){
     fetch('/stations').then( response => {
       return response.json();
     }).then( json => {
       this.setState({
-        knownStations: json
+        knownStations: json.sort((a, b) => {
+          if(a.name < b.name) {
+            return -1;
+          } else if(a.name > b.name) {
+            return 1;
+          } else {
+            return 0;
+          }
+        })
       });
     }).catch( err => {
       console.error(err);
     });
+  }
+
+  renderTypeaheadItem(result, props){
+    const stop = <strong key={result.id}>{result.name}</strong>;
+    const distance = Math.round(this.distance(this.state.userLocation.coords, {latitude: result.latitude, longitude: result.longitude}));
+    const unit = distance > 1000 ? "km." : "m.";
+
+    const distanceField = <p key={result.id + "dist"}>Distance: {distance > 1000 ? distance / 1000 : distance} {unit}</p>;
+    return [stop, distanceField];
+  }
+
+  distance(location1, location2) {
+    const earthRadius = 6371;
+    const latxRadians = this.toRadians(location1.latitude);
+    const latyRadians = this.toRadians(location2.latitude);
+    const deltaLatRadians = this.toRadians(location1.latitude - location2.latitude);
+    const deltaLngRadians = this.toRadians(location1.longitude - location2.longitude);
+
+    const a = Math.pow(Math.sin(deltaLatRadians/2), 2)
+        + Math.cos(latxRadians) * Math.cos(latyRadians) * Math.pow(Math.sin(deltaLngRadians/2), 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    return earthRadius * c * 1000;
+  }
+
+  toRadians(degrees){
+    return degrees * (Math.PI/180);
   }
 
   render() {
@@ -117,8 +154,11 @@ class App extends Component {
                     <Typeahead
                         placeholder="Select busstop to show departure times."
                         labelKey="name"
-                        onChange={this.handleStopChanged}
-                        options={this.state.knownStations}/>
+                        onChange={this.handleStopChanged.bind(this)}
+                        options={this.state.knownStations}
+                        renderMenuItemChildren={this.renderTypeaheadItem.bind(this)}
+                        emptyLabel="No stops found"
+                    />
 
                   </Col>
                 </FormGroup>
@@ -134,7 +174,7 @@ class App extends Component {
 
           <Row>
             <Col sm={12}>
-              <MapContainer onStationSelected={this.handleStopChangedByMap}
+              <MapContainer onStationSelected={this.handleStopChangedByMap.bind(this)}
                             onMapClicked={this.handleMapClicked}
                             currentStop={this.state.currentStop}
                             infoWindowVisible={this.state.infoWindowVisible}
@@ -145,72 +185,6 @@ class App extends Component {
           </Row>
         </div>
       </div>
-    );
-  }
-
-  // ---------- UNUSED ------------
-  updateTransportationModes() {
-    axios.get('http://localhost:8080/mode')
-        .then((response) => {
-          this.setState({
-            modes: response.data
-          });
-        })
-        .catch((err) => {
-          console.error(err);
-        });
-  }
-
-  getTransportationModes() {
-    return (
-        this.state.modes.map((mode) => {
-          return <option key={mode} value={mode}>{mode}</option>
-        })
-    );
-  }
-
-
-  getArrivalPredictions(e){
-    e.preventDefault();
-
-    axios.get('http://localhost:8080/arrival-predictions', {params: {mode: this.state.selectedMode}})
-        .then((response) => {
-          console.log('response');
-        }).catch((err) => {
-      console.error(err);
-    });
-
-  }
-
-  handleModeChanged(e){
-    this.setState({
-      selectedMode: e.target.value
-    })
-  }
-
-  buildArrivalTimesList(list){
-    const lineMapping = new Map();
-
-    list.forEach((arrival) => {
-      const current = lineMapping.get(arrival.lineName);
-      if(!current || current > arrival.timeToStation){
-        lineMapping.set(arrival.lineName, arrival.timeToStation);
-      }
-    });
-
-    return (
-        Array.from(lineMapping.keys()).sort((a,b)=>{return a-b}).map((key) => {
-          return (
-              <Row key={key}>
-                <Col xs={1}><p key={key}><strong>{key}</strong></p></Col>
-                <Col xs={11}><p>Arriving in: {
-                  lineMapping.get(key) < 60 ? "Less than 1 minute." :
-                      Math.round(lineMapping.get(key)/60) +
-                      (Math.round(lineMapping.get(key)/60) > 1 ? " minutes." : " minute.")
-                }</p></Col>
-              </Row>
-          );
-        })
     );
   }
 }

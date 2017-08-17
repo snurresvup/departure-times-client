@@ -8,13 +8,12 @@ class DepartureTimes extends Component{
     super(props);
     this.state = {
       heading: <h3>Select a station to show departure times.</h3>,
-      body: new Map()
+      body: []
     };
-    //this.handleArrivalPredictionsWSMessage = this.handleArrivalPredictionsWSMessage.bind(this);
   };
 
   componentDidMount(){
-    this.ws = new WebSocket("ws://localhost:8082/websockets/arrivalPredictions");
+    this.ws = new WebSocket("ws://localhost:8082/websockets/arrivalPredictionsById");
     this.ws.onmessage = this.handleArrivalPredictionsWSMessage.bind(this);
     this.ws.onopen = () => {
       this.setState({
@@ -31,6 +30,8 @@ class DepartureTimes extends Component{
   handleArrivalPredictionsWSMessage(message){
     const arrivalData = JSON.parse(message.data);
 
+    console.log(arrivalData);
+
     this.setState({
       body: arrivalData
     });
@@ -43,31 +44,12 @@ class DepartureTimes extends Component{
   }
 
   updateDepartureTimes(){
-    this.ws.send("currentStop:" + this.props.currentStop.name);
+    this.ws.send("currentStopId:" + this.props.currentStop.id);
 
     this.setState({
       heading: <h2>Departure times for: {this.props.currentStop.name}</h2>,
-      body: new Map()
+      body: []
     });
-/*
-    fetch(`/arrival-predictions?station=${this.props.currentStop.name}`, {accept: 'application/json'})
-        .then(response => {
-          return response.json();
-        })
-        .then(json => {
-          console.log(json);
-          this.setState({
-            heading: <h2>Departure times for: {this.props.currentStop.name}</h2>,
-            body: this.buildArrivalTimesList(json)
-          });
-        })
-        .catch((err) => {
-          console.log(err);
-          this.setState({
-            body:<strong>Could not find departure times for: {this.props.currentStop.name}</strong>
-          })
-        })
-        */
   }
 
   buildLineMapping(arrivalsList){
@@ -75,8 +57,10 @@ class DepartureTimes extends Component{
 
     arrivalsList.forEach((arrival) => {
       const current = lineMapping.get(arrival.lineName);
-      if(!current || current > arrival.timeToStation){
-        lineMapping.set(arrival.lineName, arrival.timeToStation);
+      if(!current){
+        lineMapping.set(arrival.lineName, [arrival]);
+      } else {
+        current.push(arrival)
       }
     });
 
@@ -102,21 +86,56 @@ class DepartureTimes extends Component{
     );
   }
 
+  etaToText(eta){
+    if(eta < 60) return "Less than 1 minute.";
+    const time = Math.round(eta/60);
+    return time + (time > 1 ? " minutes." : " minute.");
+  }
+
   renderBody(){
-    return (
-        Array.from(Object.keys(this.state.body)).sort((a,b) => {return a-b}).map( key => {
-          return (
-              <Row key={key}>
-                <Col xs={1}><p><strong>{key}</strong></p></Col>
-                <Col xs={11}><p>Arriving in: {
-                  this.state.body[key].arrivalTime < 60 ? "Less than 1 minute." :
-                      Math.round(this.state.body[key].arrivalTime/60) +
-                      (Math.round(this.state.body[key].arrivalTime/60) > 1 ? " minutes." : " minute.")
-                }</p></Col>
-              </Row>
-          );
+    if(!this.props.currentStop.id) return;
+
+    const linemapping = this.buildLineMapping(
+        this.state.body.sort((a, b) => {
+          if (a.lineName !== b.lineName) {
+            return a.lineName - b.lineName;
+          }
+          return a.timeToStation - b.timeToStation;
         })
     );
+
+    if(linemapping.size === 0) return <p><strong>No data available for the selected stop</strong></p>;
+
+    const heading = (
+        <Row key="header">
+          <Col xs={1}><strong>Line</strong></Col>
+          <Col xs={3}><strong>Next</strong></Col>
+          <Col xs={3}><strong>Upcomming</strong></Col>
+        </Row>
+    );
+
+    const body = (
+      Array.from(linemapping.keys()).map(key => {
+        const next = (<Col xs={3}><p>Arriving in: {
+          this.etaToText(linemapping.get(key)[0].timeToStation)
+        }</p></Col>);
+
+        const upcomming = ( linemapping.get(key).size > 1 ?
+            <Col xs={3}><p>Arriving in: {
+              this.etaToText(linemapping.get(key)[1].timeToStation)
+            }</p></Col> : [] );
+
+        return (
+            <Row key={key.id}>
+              <Col xs={1}><p><strong>{key}</strong></p></Col>
+              {next}
+              {upcomming}
+            </Row>
+        );
+      })
+    );
+
+    return [heading, body];
   }
 
   render(){
