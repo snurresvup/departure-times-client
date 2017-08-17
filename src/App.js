@@ -49,7 +49,6 @@ class App extends Component {
     if(this.state.userLocation !== prevState.userLocation){
       this.updateMarkedStations()
     }
-    console.log(this.state.currentStop)
   }
 
 
@@ -75,11 +74,8 @@ class App extends Component {
 
   handleStopChanged(stop){
     if(!stop[0]) return;
-    console.log(stop[0]);
 
     if(!this.state.markedStations.includes(stop[0])) {
-      console.log("Adding: " + stop[0] + "to stations");
-      console.log(stop[0]);
       //Add the station to the map
       this.setState({
         markedStations: this.state.markedStations.concat(stop[0])
