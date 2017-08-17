@@ -8,7 +8,8 @@ class DepartureTimes extends Component{
     super(props);
     this.state = {
       heading: <h3>Select a station to show departure times.</h3>,
-      body: []
+      body: [],
+      isLoading: false
     };
   };
 
@@ -30,10 +31,9 @@ class DepartureTimes extends Component{
   handleArrivalPredictionsWSMessage(message){
     const arrivalData = JSON.parse(message.data);
 
-    console.log(arrivalData);
-
     this.setState({
-      body: arrivalData
+      body: arrivalData,
+      isLoading: false
     });
   }
 
@@ -48,7 +48,8 @@ class DepartureTimes extends Component{
 
     this.setState({
       heading: <h2>Departure times for: {this.props.currentStop.name}</h2>,
-      body: []
+      body: [],
+      isLoading: true
     });
   }
 
@@ -94,6 +95,11 @@ class DepartureTimes extends Component{
 
   renderBody(){
     if(!this.props.currentStop.id) return;
+    if(this.state.isLoading) return (
+        <Row>
+          <Col xs={12}><strong>Loading...</strong></Col>
+        </Row>
+    );
 
     const linemapping = this.buildLineMapping(
         this.state.body.sort((a, b) => {
@@ -120,7 +126,7 @@ class DepartureTimes extends Component{
           this.etaToText(linemapping.get(key)[0].timeToStation)
         }</p></Col>);
 
-        const upcomming = ( linemapping.get(key).size > 1 ?
+        const upcomming = ( linemapping.get(key).length > 1 ?
             <Col xs={3}><p>Arriving in: {
               this.etaToText(linemapping.get(key)[1].timeToStation)
             }</p></Col> : [] );

@@ -28,6 +28,7 @@ class MapContainer extends Component {
       stations.map((station) => {
         return <Marker key={station.id}
                        name={station.name}
+                       title={station.name}
                        id={station.id}
                        position={{lat:station.latitude, lng:station.longitude}}
                        station={station}
