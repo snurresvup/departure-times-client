@@ -17,7 +17,8 @@ class App extends Component {
       modes: [],
       currentStop: {},
       selectedMode: "",
-      stations: [],
+      markedStations: [],
+      knownStations: [],
       userLocation: {},
       departureTimesHeading: <h1>Departure Times</h1>,
       departureTimes: ""
@@ -26,37 +27,38 @@ class App extends Component {
     this.handleModeChanged = this.handleModeChanged.bind(this);
     this.getArrivalPredictions = this.getArrivalPredictions.bind(this);
     this.handleStopChanged = this.handleStopChanged.bind(this);
-    this.updateCurrentStop = this.updateCurrentStop.bind(this);
+    this.handleStopChangedByMap = this.handleStopChangedByMap.bind(this);
   }
 
   componentDidMount(){
-    this.updateTransportationModes();
+    //this.updateTransportationModes();
     navigator.geolocation.getCurrentPosition((position) => {
       this.setState({
         userLocation: position
       });
-      this.updateStations();
     });
     navigator.geolocation.watchPosition((position) => {
       this.setState({
         userLocation: position
       });
     });
+    this.getAvailableStops();
   }
 
   componentDidUpdate(prevProps, prevState){
     if(this.state.userLocation !== prevState.userLocation){
-      this.updateStations()
+      this.updateMarkedStations()
     }
+    console.log(this.state.currentStop)
   }
 
 
-  updateStations(){
+  updateMarkedStations(){
     axios.get('http://localhost:8080/stations', {params: {lat: this.state.userLocation.coords.latitude ,lng: this.state.userLocation.coords.longitude, radius: 2000}})
         .then((response) => {
           console.log(response);
           this.setState({
-            stations: response.data
+            markedStations: response.data
           });
         })
         .catch((err) => {
@@ -64,6 +66,93 @@ class App extends Component {
         });
   }
 
+  handleStopChangedByMap(stop){
+    this.setState({
+      currentStop: stop,
+      infoWindowVisible: true
+    });
+  }
+
+  handleStopChanged(stop){
+    if(!stop[0]) return;
+    console.log(stop[0]);
+
+    if(!this.state.markedStations.includes(stop[0])) {
+      console.log("Adding: " + stop[0] + "to stations");
+      console.log(stop[0]);
+      //Add the station to the map
+      this.setState({
+        markedStations: this.state.markedStations.concat(stop[0])
+      });
+    }
+
+    this.handleStopChangedByMap(stop[0]);
+  }
+
+  handleMapClicked(){
+    this.setState({
+      infoWindowVisible: false
+    });
+  }
+
+  getAvailableStops(){
+    fetch('/stations').then( response => {
+      return response.json();
+    }).then( json => {
+      this.setState({
+        knownStations: json
+      });
+    }).catch( err => {
+      console.error(err);
+    });
+  }
+
+  render() {
+    return (
+      <div>
+        <PageHeader className="centering">Departure Times For London Buses</PageHeader>
+        <div className="container">
+
+          <Form horizontal>
+            <Row>
+              <Col xs={12} sm={12}>
+                <FormGroup>
+                  <Col sm={12}>
+                    <Typeahead
+                        placeholder="Select busstop to show departure times."
+                        labelKey="name"
+                        onChange={this.handleStopChanged}
+                        options={this.state.knownStations}/>
+
+                  </Col>
+                </FormGroup>
+              </Col>
+            </Row>
+          </Form>
+
+          <Row>
+            <Col sm={12}>
+              <DepartureTimes currentStop={this.state.currentStop}/>
+            </Col>
+          </Row>
+
+          <Row>
+            <Col sm={12}>
+              <MapContainer onStationSelected={this.handleStopChangedByMap}
+                            onMapClicked={this.handleMapClicked}
+                            currentStop={this.state.currentStop}
+                            infoWindowVisible={this.state.infoWindowVisible}
+                            userLocation={this.state.userLocation}
+                            showUserLocation={true}
+                            stations={this.state.markedStations}/>
+            </Col>
+          </Row>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- UNUSED ------------
   updateTransportationModes() {
     axios.get('http://localhost:8080/mode')
         .then((response) => {
@@ -84,6 +173,7 @@ class App extends Component {
     );
   }
 
+
   getArrivalPredictions(e){
     e.preventDefault();
 
@@ -91,8 +181,8 @@ class App extends Component {
         .then((response) => {
           console.log('response');
         }).catch((err) => {
-          console.error(err);
-        });
+      console.error(err);
+    });
 
   }
 
@@ -113,8 +203,8 @@ class App extends Component {
     });
 
     return (
-          Array.from(lineMapping.keys()).sort((a,b)=>{return a-b}).map((key) => {
-            return (
+        Array.from(lineMapping.keys()).sort((a,b)=>{return a-b}).map((key) => {
+          return (
               <Row key={key}>
                 <Col xs={1}><p key={key}><strong>{key}</strong></p></Col>
                 <Col xs={11}><p>Arriving in: {
@@ -123,65 +213,8 @@ class App extends Component {
                       (Math.round(lineMapping.get(key)/60) > 1 ? " minutes." : " minute.")
                 }</p></Col>
               </Row>
-            );
-          })
-    );
-  }
-
-  updateCurrentStop(station){
-    this.setState({
-      currentStop: station
-    });
-  }
-
-  handleStopChanged(stop){
-    if(!stop[0]) return;
-    this.updateCurrentStop(stop[0]);
-  }
-
-  getAvailableStops(){
-    return this.state.stations;
-  }
-
-  render() {
-    return (
-      <div>
-        <PageHeader className="centering">Departure Times For London Buses</PageHeader>
-        <div className="container">
-
-          <Form horizontal>
-            <Row>
-              <Col xs={12} sm={12}>
-                <FormGroup>
-                  <Col sm={12}>
-                    <Typeahead
-                        placeholder="Select busstop to show departure times."
-                        labelKey="name"
-                        onChange={this.handleStopChanged}
-                        options={this.getAvailableStops()}/>
-
-                  </Col>
-                </FormGroup>
-              </Col>
-            </Row>
-          </Form>
-
-          <Row>
-            <Col sm={12}>
-              <DepartureTimes currentStop={this.state.currentStop}/>
-            </Col>
-          </Row>
-
-          <Row>
-            <Col sm={12}>
-              <MapContainer onStationSelected={this.updateCurrentStop}
-                            userLocation={this.state.userLocation}
-                            showUserLocation={true}
-                            stations={this.state.stations}/>
-            </Col>
-          </Row>
-        </div>
-      </div>
+          );
+        })
     );
   }
 }

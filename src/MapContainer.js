@@ -6,8 +6,6 @@ class MapContainer extends Component {
   constructor(props){
     super(props);
     this.state = {
-      activeMarker: {},
-      infoWindowVisible: false,
       selectedStation: {}
     };
     this.onMarkerClicked = this.onMarkerClicked.bind(this);
@@ -16,29 +14,29 @@ class MapContainer extends Component {
   }
 
   onMarkerClicked(props, marker, event){
-    this.setState({
-      selectedStation: props,
-      activeMarker: marker,
-      infoWindowVisible: true
-    });
-    this.props.onStationSelected(this.state.selectedStation);
+    this.props.onStationSelected(props.station, marker);
   }
 
   onMapClicked(props) {
-    if (this.state.infoWindowVisible) {
-      this.setState({
-        activeMarker: null,
-        infoWindowVisible: false
-      });
-    }
+    this.props.onMapClicked();
   }
 
   renderMarkers(){
     if(!this.props.stations) return null;
-    const {stations} = this.props;
+    const {stations, google} = this.props;
     return (
       stations.map((station) => {
-        return <Marker key={station.id} name={station.name} id={station.id} position={{lat:station.latitude, lng:station.longitude}} onClick={this.onMarkerClicked}/>
+        return <Marker key={station.id}
+                       name={station.name}
+                       id={station.id}
+                       position={{lat:station.latitude, lng:station.longitude}}
+                       station={station}
+                       icon={{
+                         url: "bus_stop_icon.png",
+                         anchor: new google.maps.Point(10, 10),
+                         scaledSize: new google.maps.Size(20, 20)
+                       }}
+                       onClick={this.onMarkerClicked}/>
       })
     );
   }
@@ -72,19 +70,16 @@ class MapContainer extends Component {
       return <div>Loading...</div>
     }
 
-    const style = {
-    };
-
     return (
       <div className="embed-responsive embed-responsive-4by3">
-        <Map className="embed-responsive-item" initialCenter={{lat:51.507351, lng:-0.127758}} centerAroundCurrentLocation={true} style={style} google={this.props.google} zoom={14}>
+        <Map className="embed-responsive-item" initialCenter={{lat:51.507351, lng:-0.127758}} centerAroundCurrentLocation={true} google={this.props.google} zoom={14}>
           {this.renderMarkers()}
           {this.renderUserLocation()}
           <InfoWindow
-            marker={this.state.activeMarker}
-            visible={this.state.infoWindowVisible}>
+            position={{lat:this.props.currentStop.latitude, lng: this.props.currentStop.longitude}}
+            visible={this.props.infoWindowVisible}>
               <div>
-                <p>{this.state.selectedStation ? this.state.selectedStation.name : "No station selected..."}</p>
+                <p>{this.props.currentStop ? this.props.currentStop.name : "No station selected..."}</p>
               </div>
           </InfoWindow>
         </Map>
@@ -97,13 +92,18 @@ MapContainer.propTypes = {
   stations: PropTypes.array,
   showUserLocation: PropTypes.bool,
   userLocation: PropTypes.object,
-  onStationSelected: PropTypes.func
+  onStationSelected: PropTypes.func,
+  onMapClicked: PropTypes.func,
+  currentStop: PropTypes.object,
+  infoWindowVisible: PropTypes.bool
 };
 
 MapContainer.defaultProps = {
   stations: [],
   showUserLocation: false,
-  userLocation: {}
+  userLocation: {},
+  currentStop: {},
+  infoWindowVisible: false
 };
 
 export default GoogleApiWrapper({
