@@ -53,14 +53,14 @@ class App extends Component {
 
 
   updateMarkedStations(){
-    axios.get('http://localhost:8080/stations', {params: {lat: this.state.userLocation.coords.latitude ,lng: this.state.userLocation.coords.longitude, radius: 2000}})
-        .then((response) => {
-          console.log(response);
+    fetch(`/stations?lat=${this.state.userLocation.coords.latitude}&lng=${this.state.userLocation.coords.longitude}&radius=2000`)
+        .then(response => {
+          return response.json()
+        }).then(json => {
           this.setState({
-            markedStations: response.data
+            markedStations: json
           });
-        })
-        .catch((err) => {
+        }).catch(err => {
           console.error(err);
         });
   }
