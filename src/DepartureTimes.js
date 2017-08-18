@@ -14,7 +14,7 @@ class DepartureTimes extends Component{
   };
 
   componentDidMount(){
-    this.ws = new WebSocket("ws://localhost:8082/websockets/arrivalPredictionsById");
+    this.ws = new WebSocket("ws://178.62.31.37:8082/websockets/arrivalPredictionsById");
     this.ws.onmessage = this.handleArrivalPredictionsWSMessage.bind(this);
     this.ws.onopen = () => {
       this.setState({
@@ -25,6 +25,9 @@ class DepartureTimes extends Component{
       this.setState({
         webSocketConnected: false
       })
+    };
+    this.ws.onerror = () => {
+      this.ws = new WebSocket("ws://178.62.31.37:8082/websockets/arrivalPredictionsById");
     }
   }
 
