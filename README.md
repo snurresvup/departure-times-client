@@ -17,7 +17,7 @@ The API part of the system is built with [Dropwizard.io](http://www.dropwizard.i
 
 ## Websocket server [(/websocketArrivalTimes)](https://github.com/snurresvup/websocketArrivalTimes)
 A small websocket server has been created in java and is served by [Glassfish](https://javaee.github.io/glassfish/). This websocket provides live updates to the frontend, by pushing messages containing arrival information for the currently selected stop, approximately every 5 seconds.
-The frontend can send a message of the form "currentStopId:*stopID*" to update the stop for which to receive arrival time info for.
+The frontend can send a message of the form "currentStopId:*stopID*" to update the stop for which to receive arrival time info.
 
 The websocket component requests updates from the API continuously, to get the most recent arrival times info.
 
