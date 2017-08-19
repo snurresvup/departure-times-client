@@ -27,10 +27,10 @@ This component has been created because it wasn't possible for me to get the str
 The system is only partially deployed (the reason will follow). The API, websocket component and the MongoDB is deployed at a [DigitalOcean](https://www.digitalocean.com/) droplet at IP: 178.62.31.37
 with the API listening on port 8080, and the websocket on port 8082.
 
-Clearly I would have wanted to deploy the frontend component to the server as well, however I ran into problems that I could not solve. The problem being that the React app in the frontend uses the users location, which is only available in "safe contexts" (from Chrome 50). To handle this I changed the API and frontend to use self signed certificates and https, however I found that I could not get the websocket component to communicate via wss, as is required when the connection is established by a page viewed through https.
+Clearly, I would have wanted to deploy the frontend component to the server as well. However, I ran into problems that I could not solve. The problem being that the React app in the frontend uses the users location, which is only available in "safe contexts" (from Chrome 50). To handle this I changed the API and frontend to use self signed certificates and https. However, I found that I could not get the websocket component to communicate via wss which is required, when the connection is established by a page viewed through https.
 
 ## Running the code
-The code must be run locally (the reason is in the Deployment section). And requires npm.
+The code must be run locally (the reason is in the Deployment section) and requires npm.
 
 There are two possible ways to run the project: By running it in development mode, or by building the project and serving it with a static server.
 
@@ -47,7 +47,10 @@ In development mode the service will be available at [localhost:3000](http://loc
 
 
 ### To run the project in production mode:
-- Pull the code from this repository.
+- Pull the code from this repository:
+```shell
+$ git clone https://github.com/snurresvup/departure-times-client.git
+```
 - Build the project: From the root directory of the project run
 ```shell
 $ npm run build
@@ -57,15 +60,15 @@ $ npm run build
 $ npm install -g serve
 $ serve -s build
 ```
-If the serve npm module is used to serve the project, then it will be available at [localhost:5000](http://localhost:5000) if the port is available.
+If the serve npm module is used to serve the project, then it will be available at [localhost:5000](http://localhost:5000), if the port is available.
 
 ## Problems
 When building the system, I have run into several issues regarding the documentation of the tfl api.
 One of these being that the api offers 3 different ways to get arrival predictions, and the two that was available to me was not consistent with the rest of the data provided by the api.
 
-One of the endpoints delivers a long list of arrays, with each array containing a number, a line name, a station name and a timestamp representing the arrival prediction. The other option delivers arrival prediction for a specific stop id. For the system constructed I settled for using the later endpoint, as there are multiple stops with the same name, so the first option does not give a clear indication of what stop the line will be arriving at.
+One of the endpoints delivers a long list of arrays, with each array containing a number, a line name, a station name and a timestamp representing the arrival prediction. The other option delivers arrival prediction for a specific stop id. For the system constructed, I settled for using the later endpoint, as there are multiple stops with the same name, so the first option does not give a clear indication of what stop the line will be arriving at.
 
 ### Choice of architecture
-I have chosen Dropwizard as backend, based on its positive reputation. The same goes for the React frontend, as it provides a good foundation for keeping track of state in a reactive frontend. Initially I wanted the frontend to get the stream of arrival information from tfl directly, but as mentioned this turned out not to be an option. This is why I chose to construct a websocket server, such that the dropwizard REST api is kept state free.
+I have chosen Dropwizard as backend, based on its positive reputation for building REST apis. The same goes for the React frontend, as it provides a good foundation for keeping track of state in a reactive frontend. Initially I wanted the frontend to get the stream of arrival information from tfl directly, but as mentioned this turned out not to be an option. This is why, I chose to construct a websocket server, such that the dropwizard REST api is kept state free.
 
-Besides showing some of my capabilities in coding I have seen this project as an opportunity to try out some technologies with which I haven't worked with before. So this has been my first time working with React js, Dropwizard and Websockets.
+Besides showing some of my capabilities in coding, I have seen this project as an opportunity to try out some technologies which I haven't worked with before. So this has been my first time working with React js, Dropwizard and Websockets.
