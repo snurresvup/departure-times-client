@@ -22,3 +22,37 @@ The websocket component requests updates from the API continuously, to get the m
 This component has been created because it wasn't possible for me to get the stream of arrival information from (tfl), as it requires IP-whitelisting. Thus to get similar functionality, i decided to experiment with constructing a websocket.
 
 ## Deployment
+The system is only partially deployed (the reason will follow). The API, websocket component and the MongoDB is deployed at a [DigitalOcean](https://www.digitalocean.com/) droplet at IP: 178.62.31.37
+with the API listening on port 8080, and the websocket on port 8082.
+
+Clearly I would have wanted to deploy the frontend component to the server as well, however I ran into problems that I could not solve. The problem being that the React app in the frontend uses the users location, which is only available in "safe contexts" (from Chrome 50). To handle this i changed the API and frontend to use self signed certificates and https, however I found that I could not get the websocket component to communicate via wss, as is required when the connection is established by a page viewed through https.
+
+## Running the code
+The code must be run locally (the reason is in the Deployment section). And requires npm.
+
+There are two possible ways to run the project: By running it in development mode, or by building the project and serving it with a static server.
+
+### To run the project in development mode:
+- Pull the code from this repository:
+```shell
+$ git clone https://github.com/snurresvup/departure-times-client.git
+```
+- Run the project in development mode with npm:
+```shell
+$ npm start
+```
+In development mode the service will be available at [localhost:3000](http://localhost:3000)
+
+
+### To run the project in production mode:
+- Pull the code from this repository.
+- Build the project: From the root directory of the project run
+```shell
+$ npm run build
+```
+- Serve the build folder with a static http server.
+```shell
+$ npm install -g serve
+$ serve -s build
+```
+If the serve npm module is used to serve the project, then it will be available at [localhost:5000](http://localhost:5000) if the port is available.
