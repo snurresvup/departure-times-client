@@ -21,7 +21,7 @@ The frontend can send a message of the form "currentStopId:*stopID*" to update t
 
 The websocket component requests updates from the API continuously, to get the most recent arrival times info.
 
-This component has been created because it wasn't possible for me to get the stream of arrival information from (tfl), as it requires IP-whitelisting. Thus to get similar functionality, i decided to experiment with constructing a websocket.
+This component has been created because it wasn't possible for me to get the stream of arrival information from (tfl), as it requires IP-whitelisting. Thus to get similar functionality, I decided to experiment with constructing a websocket.
 
 ## Deployment
 The system is only partially deployed (the reason will follow). The API, websocket component and the MongoDB is deployed at a [DigitalOcean](https://www.digitalocean.com/) droplet at IP: 178.62.31.37
