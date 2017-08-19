@@ -72,3 +72,6 @@ One of the endpoints delivers a long list of arrays, with each array containing 
 I have chosen Dropwizard as backend, based on its positive reputation for building REST apis. The same goes for the React frontend, as it provides a good foundation for keeping track of state in a reactive frontend. Initially I wanted the frontend to get the stream of arrival information from tfl directly, but as mentioned this turned out not to be an option. This is why, I chose to construct a websocket server, such that the dropwizard REST api is kept state free.
 
 Besides showing some of my capabilities in coding, I have seen this project as an opportunity to try out some technologies which I haven't worked with before. So this has been my first time working with React js, Dropwizard and Websockets.
+
+## Future work
+If more time was provided, more work would go into thoroughly testing the service and its sub components. As well as constructing health checks for the dropwizard application. This would also lead to programming the services in a more defensive way, to make the system more robust. 
