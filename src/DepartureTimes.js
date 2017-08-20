@@ -31,6 +31,7 @@ class DepartureTimes extends Component{
     }
   }
 
+  //Handler called when message is received from the websocket
   handleArrivalPredictionsWSMessage(message){
     const arrivalData = JSON.parse(message.data);
 
@@ -46,6 +47,7 @@ class DepartureTimes extends Component{
     }
   }
 
+  //Informs the websocket service that we want arrival information for a new stop id
   updateDepartureTimes(){
     this.ws.send("currentStopId:" + this.props.currentStop.id);
 
@@ -55,6 +57,7 @@ class DepartureTimes extends Component{
       isLoading: true
     });
   }
+
 
   buildLineMapping(arrivalsList){
     const lineMapping = new Map();
@@ -71,31 +74,14 @@ class DepartureTimes extends Component{
     return lineMapping;
   }
 
-  buildArrivalTimesList(data){
-    const lineMapping = this.buildLineMapping(data);
-
-    return (
-        Array.from(lineMapping.keys()).sort((a,b) => {return a-b}).map((key) => {
-          return (
-              <Row key={key}>
-                <Col xs={1}><p><strong>{key}</strong></p></Col>
-                <Col xs={11}><p>Arriving in: {
-                  lineMapping.get(key) < 60 ? "Less than 1 minute." :
-                      Math.round(lineMapping.get(key)/60) +
-                      (Math.round(lineMapping.get(key)/60) > 1 ? " minutes." : " minute.")
-                }</p></Col>
-              </Row>
-          );
-        })
-    );
-  }
-
+  //Converts number to textual arrival estimation
   etaToText(eta){
     if(eta < 60) return "Less than 1 minute.";
     const time = Math.round(eta/60);
     return time + (time > 1 ? " minutes." : " minute.");
   }
 
+  //Responsible for rendering the contents of the DepartureTimes component
   renderBody(){
     if(!this.props.currentStop.id) return;
     if(this.state.isLoading) return (

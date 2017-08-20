@@ -21,6 +21,7 @@ class MapContainer extends Component {
     this.props.onMapClicked();
   }
 
+  //Responsible for rendering the markers representing bus stops on the map
   renderMarkers(){
     if(!this.props.stations) return null;
     const {stations, google} = this.props;
@@ -42,6 +43,7 @@ class MapContainer extends Component {
     );
   }
 
+  //A helper method for converting user location
   userLocationToPosition() {
     if(!this.props.userLocation || !this.props.userLocation.coords) return;
     const {coords} = this.props.userLocation;
@@ -51,6 +53,7 @@ class MapContainer extends Component {
     }
   }
 
+  //Responsible for rendering the user marker on the map
   renderUserLocation(){
     const {google} = this.props;
     return (

@@ -45,7 +45,7 @@ class App extends Component {
     }
   }
 
-
+  //Gets all of the stations within a 2km radius of the users location
   updateMarkedStations(){
     fetch(`/stations?lat=${this.state.userLocation.coords.latitude}&lng=${this.state.userLocation.coords.longitude}&radius=2000`)
         .then(response => {
@@ -59,6 +59,7 @@ class App extends Component {
         });
   }
 
+  //Handler called when the MapContainer selects a new station
   handleStopChangedByMap(stop){
     this.setState({
       currentStop: stop,
@@ -66,6 +67,7 @@ class App extends Component {
     });
   }
 
+  //Handler called when typeahead selects a station
   handleStopChanged(stop){
     if(!stop[0]) return;
 
@@ -79,12 +81,14 @@ class App extends Component {
     this.handleStopChangedByMap(stop[0]);
   }
 
+  //Closes the info window on the google map
   handleMapClicked(){
     this.setState({
       infoWindowVisible: false
     });
   }
 
+  //Checks if the given stop is marked on the google map
   stopIsMarked(stop){
     for(let st of this.state.markedStations){
       if(st.id === stop.id) return true;
@@ -92,6 +96,7 @@ class App extends Component {
     return false;
   }
 
+  //Gets the list of all known bus stops from the API
   getAvailableStops(){
     fetch('/stations').then( response => {
       return response.json();
@@ -112,6 +117,7 @@ class App extends Component {
     });
   }
 
+  //Responsible for rendering each individual item in the typeahead menu
   renderTypeaheadItem(result, props){
     const stop = <strong key={result.id}>{result.name}</strong>;
     const distance = Math.round(this.distance(this.state.userLocation.coords, {latitude: result.latitude, longitude: result.longitude}));
@@ -121,6 +127,13 @@ class App extends Component {
     return [stop, distanceField];
   }
 
+  /**
+   * Uses the 'haversine' formula to calculate the great-circle distance between location1 and location2 in meters.
+   * Source: http://www.movable-type.co.uk/scripts/latlong.html
+   * @param location1
+   * @param location2
+   * @return the distnace between the two points in meters.
+   */
   distance(location1, location2) {
     const earthRadius = 6371;
     const latxRadians = this.toRadians(location1.latitude);
