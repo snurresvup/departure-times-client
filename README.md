@@ -57,10 +57,10 @@ $ npm run build
 ```
 - Serve the build folder with a static http server.
 ```shell
-$ npm install -g serve
-$ serve -s build
+$ npm install -g http-server
+$ http-server build -p 5000 -P http://178.62.31.37:8080/
 ```
-If the serve npm module is used to serve the project, then it will be available at [localhost:5000](http://localhost:5000), if the port is available.
+The service will then be available at  [localhost:5000](http://localhost:5000), if the port is available.
 
 ## Problems
 When building the system, I have run into several issues regarding the documentation of the tfl api.
