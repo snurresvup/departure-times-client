@@ -68,10 +68,13 @@ One of these being that the api offers 3 different ways to get arrival predictio
 
 One of the endpoints delivers a long list of arrays, with each array containing a number, a line name, a station name and a timestamp representing the arrival prediction. The other option delivers arrival prediction for a specific stop id. For the system constructed, I settled for using the later endpoint, as there are multiple stops with the same name, so the first option does not give a clear indication of what stop the line will be arriving at.
 
+The endpoint providing the arrival predictions does not have information for all stop ids and thus, some of the bus stops presented in the application has no arrival data to display.
+
 ### Choice of architecture
 I have chosen Dropwizard as backend, based on its positive reputation for building REST apis. The same goes for the React frontend, as it provides a good foundation for keeping track of state in a reactive frontend. Initially I wanted the frontend to get the stream of arrival information from tfl directly, but as mentioned this turned out not to be an option. This is why, I chose to construct a websocket server, such that the dropwizard REST api is kept state free.
 
 Besides showing some of my capabilities in coding, I have seen this project as an opportunity to try out some technologies which I haven't worked with before. So this has been my first time working with React js, Dropwizard and Websockets.
 
 ## Future work
-If more time was provided, more work would go into thoroughly testing the service and its sub components. As well as constructing health checks for the dropwizard application. This would also lead to programming the services in a more defensive way, to make the system more robust. 
+If more time was provided, more work would go into thoroughly testing the service and its sub components. As well as constructing health checks for the dropwizard application. This would also lead to programming the services in a more defensive way, to make the system more robust.
+For instance a known problem, is that the Docker container running the API component crashes every now and then, but restarts immediately. This may be caused by performance issues at the droplet the system is running on.
