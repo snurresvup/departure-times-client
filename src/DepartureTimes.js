@@ -14,31 +14,26 @@ class DepartureTimes extends Component{
   };
 
   componentDidMount(){
-    this.ws = new WebSocket("ws://178.62.31.37:8082/websockets/arrivalPredictionsById");
-    this.ws.onmessage = this.handleArrivalPredictionsWSMessage.bind(this);
-    this.ws.onopen = () => {
-      this.setState({
-        webSocketConnected: true
-      });
-    };
-    this.ws.onclose = () => {
-      this.setState({
-        webSocketConnected: false
-      })
-    };
-    this.ws.onerror = () => {
-      this.ws = new WebSocket("ws://178.62.31.37:8082/websockets/arrivalPredictionsById");
-    }
+    this.updateInterval = setInterval(this.getNewArrivalPredictions.bind(this), 5000);
   }
 
-  //Handler called when message is received from the websocket
-  handleArrivalPredictionsWSMessage(message){
-    const arrivalData = JSON.parse(message.data);
+  componentWillUnmount(){
+    clearInterval(this.updateInterval);
+  }
 
-    this.setState({
-      body: arrivalData,
-      isLoading: false
-    });
+  getNewArrivalPredictions(){
+    if(!this.props.currentStop.id) return;
+    fetch(`/arrival-predictions?id=${this.props.currentStop.id}`)
+        .then(response => {
+          return response.json();
+        }).then(json => {
+          this.setState({
+            body: json,
+            isLoading: false
+          })
+        }).catch(err => {
+          console.log(err);
+        });
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -47,10 +42,8 @@ class DepartureTimes extends Component{
     }
   }
 
-  //Informs the websocket service that we want arrival information for a new stop id
+  //Temporary UI update to inform the user that the app is loading arrival information.
   updateDepartureTimes(){
-    this.ws.send("currentStopId:" + this.props.currentStop.id);
-
     this.setState({
       heading: <h2>Departure times for: {this.props.currentStop.name}</h2>,
       body: [],
