@@ -1,66 +1,29 @@
 # Departure times service
-The service in this repository and the two accompanying repositories
-[/departure-times-api](https://github.com/snurresvup/departure-times-api) and [/websocketArrivalTimes](https://github.com/snurresvup/websocketArrivalTimes)
+The service in this repository and the accompanying repository
+[/departure-times-api](https://github.com/snurresvup/departure-times-api)
 construct a web service providing live arrival times for the London buses.
 
 The system uses the [Transport for London Unified API](https://api.tfl.gov.uk/) (tfl), to obtain information about the locations of bus stops and the expected arrivals of buses at these stops.
 
-The system is constructed from three parts: React frontend, Dropwizard REST API and a websocket compnent.
+The system is constructed from two parts: a React js frontend and a Dropwizard REST API.
 
 Most focus has been put into functionality of the system and thus less emphasis has been put on security and design of the frontend.
 
 ## Frontend
 A [React js](https://facebook.github.io/react/) frontend app that is built with [create-react-app](https://github.com/facebookincubator/create-react-app) and uses [google-maps-react](https://www.npmjs.com/package/google-maps-react) to display locations of bus stops and the user. To provide a search functionality to find a specific bus stop by name, the frontend app uses [react-bootstrap-typeahead](https://www.npmjs.com/package/react-bootstrap-typeahead).
 
+The when a stop is selected in the frontend, the frontend continuously requests updates from the API, to get the most recent arrival times info.
+
+This construction of continuous pulling has been created because it wasn't possible for me to get the stream of arrival information from (tfl), as it requires IP-whitelisting. Thus to get similar functionality, I decided to request updates at fixed intervals of 5 seconds.
+
 ## API [(/departure-times-api)](https://github.com/snurresvup/departure-times-api)
 The API part of the system is built with [Dropwizard.io](http://www.dropwizard.io/) and functions as a middleware between the React app and the tfl api. When the API component is initially launched, it downloads data from tfl about the locations of all of the bus stops in London and stores the information in a [MongoDB](https://www.mongodb.com/), to be able to deliver it faster when requested. Before storing the data in the MongoDB, the API modifies the data such that it contains GeoJSON as location information. I have added a "2dsphere" index on the documents in the database in order to make Geospatial queries on the bus stops.
 
-## Websocket server [(/websocketArrivalTimes)](https://github.com/snurresvup/websocketArrivalTimes)
-A small websocket server has been created in java and is served by [Glassfish](https://javaee.github.io/glassfish/). This websocket provides live updates to the frontend, by pushing messages containing arrival information for the currently selected stop, approximately every 5 seconds.
-The frontend can send a message of the form "currentStopId:*stopID*" to update the stop for which to receive arrival time info.
-
-The websocket component requests updates from the API continuously, to get the most recent arrival times info.
-
-This component has been created because it wasn't possible for me to get the stream of arrival information from (tfl), as it requires IP-whitelisting. Thus to get similar functionality, I decided to experiment with constructing a websocket.
-
 ## Deployment
-The system is only partially deployed (the reason will follow). The API, websocket component and the MongoDB is deployed at a [DigitalOcean](https://www.digitalocean.com/) droplet at IP: 178.62.31.37
-with the API listening on port 8080, and the websocket on port 8082.
+The system is deployed at IP: 178.62.31.37 and can only be viewed through https, as the system requires positioning information about the user. The server is hosted by [DigitalOcean](https://www.digitalocean.com/).
+The API part of the system is listening on port 8080, and the client interface is is listening on port 5000.
 
-Clearly, I would have wanted to deploy the frontend component to the server as well. However, I ran into problems that I could not solve. The problem being that the React app in the frontend uses the users location, which is only available in "safe contexts" (from Chrome 50). To handle this I changed the API and frontend to use self signed certificates and https. However, I found that I could not get the websocket component to communicate via wss which is required, when the connection is established by a page viewed through https.
-
-## Running the code
-The code must be run locally (the reason is in the Deployment section) and requires npm.
-
-There are two possible ways to run the project: By running it in development mode, or by building the project and serving it with a static server.
-
-### To run the project in development mode:
-- Pull the code from this repository:
-```shell
-$ git clone https://github.com/snurresvup/departure-times-client.git
-```
-- Run the project in development mode with npm:
-```shell
-$ npm start
-```
-In development mode the service will be available at [localhost:3000](http://localhost:3000)
-
-
-### To run the project in production mode:
-- Pull the code from this repository:
-```shell
-$ git clone https://github.com/snurresvup/departure-times-client.git
-```
-- Build the project: From the root directory of the project run
-```shell
-$ npm run build
-```
-- Serve the build folder with a static http server.
-```shell
-$ npm install -g http-server
-$ http-server build -p 5000 -P http://178.62.31.37:8080/
-```
-The service will then be available at  [localhost:5000](http://localhost:5000), if the port is available.
+Because the app uses the location of the user, which can only be obtained through a secure connection. Thus both the API and the frontend is served using self signed certificates. Thus, when viewing the app, one must instruct the browser to accept the self signed certificate.
 
 ## Problems
 When building the system, I have run into several issues regarding the documentation of the tfl api.
